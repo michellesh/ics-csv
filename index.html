@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<script>
+
+	function submit(){
+		var icsTextarea = document.getElementsByName("icsData")[0],
+			csvTextarea = document.getElementsByName("csvData")[0],
+			icsData = icsTextarea.value;
+
+		csvTextarea.innerHTML = convertICStoCSV(icsData);
+		csvTextarea.select();
+
+	}
+
+	function convertICStoCSV(icsData) {
+
+		var eventObjects = [],
+			csvData = "Summary,Start Date,Start Time,End Time\n",
+			length = 0,
+			key,
+			value;
+
+		icsData = icsData.replace(new RegExp(/\n /g), '');
+		icsData = icsData.split('\n');
+
+		icsData.forEach( function(row, index) {
+
+			if (row == 'BEGIN:VEVENT') {
+
+				// do nothing
+
+			} else if (row == 'END:VEVENT') {
+
+				// add to csv
+				if (eventObjects[length]) {
+
+					csvData += prettySummary(eventObjects[length]['SUMMARY']) + ',';
+					csvData += prettyDate(eventObjects[length]['DTSTART']) + ',';
+					csvData += prettyTime(eventObjects[length]['DTSTART']) + ',';
+					csvData += prettyTime(eventObjects[length]['DTEND']) + '\n';
+
+					length++;
+
+				}
+
+			} else {
+
+				// split row string into key and value
+				row = row.split(':');
+				key = row.shift().split(';')[0];
+				value = row.join(':');
+
+				// add key/value to current event object
+				eventObjects[length] = eventObjects[length] || {};
+				eventObjects[length][key] = value;
+
+			}
+
+		});
+
+		return csvData;
+	}
+
+	function prettySummary(summary) {
+		return '"' + summary.replace(new RegExp(/\\,/g), ',') + '"';
+	}
+
+	function prettyDate(timestamp) {
+		var date = timestamp.split('T')[0];
+		return date.slice(4,6) + '/' + date.slice(6,8) + '/' + date.slice(0,4);
+	}
+
+	function prettyTime(timestamp) {
+		var time = timestamp.split('T')[1];
+		return !time ? '' : time.slice(0,2) + ':' + time.slice(2,4);
+	}
+
+</script>
+
+<style>
+
+	html {
+		height: 100%;
+	}
+	body {
+		height: 100%;
+		margin: 0;
+	}
+	.column {
+		width: 50%;
+		height: 100%;
+		float: left;
+	}
+	textarea {
+		display: block;
+		width: 90%;
+		height: 90%;
+	}
+
+</style>
+
+</head>
+
+<body>
+
+	<div class="column">
+		<span>ICS</span>
+		<button onclick="submit()">Submit</button>
+		<textarea type="textbox" name="icsData"></textarea>
+	</div>
+
+	<div class="column">
+		<span>CSV</span>
+		<textarea type="textbox" name="csvData"></textarea>
+	</div>
+
+</body>
+
+</html>
